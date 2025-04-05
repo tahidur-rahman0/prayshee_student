@@ -39,7 +39,7 @@ class MyApp extends ConsumerWidget {
 
     return GetMaterialApp(
       onGenerateTitle: (ctx) {
-        return 'Online training template';
+        return 'Prayashee';
       },
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [

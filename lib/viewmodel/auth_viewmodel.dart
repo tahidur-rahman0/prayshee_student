@@ -43,7 +43,7 @@ class AuthViewModel extends _$AuthViewModel {
           l.message,
           StackTrace.current,
         ),
-      Right(value: final r) => state = AsyncValue.data(r),
+      Right(value: final r) => _loginSuccess(r),
     };
     print(val);
   }
