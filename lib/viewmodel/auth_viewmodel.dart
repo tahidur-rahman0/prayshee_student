@@ -28,6 +28,7 @@ class AuthViewModel extends _$AuthViewModel {
   Future<void> signUpUser({
     required String name,
     required String phone,
+    required int teacherId,
     required String password,
     required String confirmPassword,
   }) async {
@@ -35,6 +36,7 @@ class AuthViewModel extends _$AuthViewModel {
     final res = await _authRemoteRepository.signup(
         name: name,
         phone: phone,
+        teacherId: teacherId,
         password: password,
         confirmPassword: confirmPassword);
 

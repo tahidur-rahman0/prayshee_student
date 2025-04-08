@@ -18,6 +18,7 @@ class AuthRemoteRepository {
   Future<Either<AppFailure, UserModel>> signup({
     required String name,
     required String phone,
+    required int teacherId,
     required String password,
     required String confirmPassword,
   }) async {
@@ -31,6 +32,7 @@ class AuthRemoteRepository {
         body: jsonEncode({
           'name': name,
           'phone': phone,
+          'teacher_id': teacherId,
           'password': password,
           'password_confirmation': confirmPassword,
         }),
@@ -45,8 +47,7 @@ class AuthRemoteRepository {
       print("Full Response: $resBodyMap");
 
       if (response.statusCode != 201) {
-        return Left(
-            AppFailure(resBodyMap['message'] ?? 'Something went wrong'));
+        return Left(AppFailure(resBodyMap['errors'] ?? 'Something went wrong'));
       }
 
       // Extract token
@@ -88,8 +89,7 @@ class AuthRemoteRepository {
       print("Full Response: $resBodyMap");
 
       if (response.statusCode != 200) {
-        return Left(
-            AppFailure(resBodyMap['message'] ?? 'Something went wrong'));
+        return Left(AppFailure(resBodyMap['errors'] ?? 'Something went wrong'));
       }
 
       // Extract token
@@ -124,8 +124,7 @@ class AuthRemoteRepository {
       print("Full Response: $resBodyMap");
 
       if (response.statusCode != 200) {
-        return Left(
-            AppFailure(resBodyMap['message'] ?? 'Something went wrong'));
+        return Left(AppFailure(resBodyMap['errors'] ?? 'Something went wrong'));
       }
 
       // Extract token

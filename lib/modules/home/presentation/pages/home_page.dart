@@ -1,59 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:online_training_template/modules/course_details/presentation/pages/course_info_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/get_navigation.dart';
+import 'package:online_training_template/main.dart';
+import 'package:online_training_template/models/course_model.dart';
+import 'package:online_training_template/models/teacher_model.dart';
+import 'package:online_training_template/providers/course_list_provider.dart';
+import 'package:online_training_template/providers/current_user_notifier.dart';
+import 'package:online_training_template/providers/teacher_details_provider.dart';
+import 'package:online_training_template/ui/app_theme.dart';
 import 'package:online_training_template/ui/color_helper.dart';
 import 'package:online_training_template/ui/routes/app_pages.dart';
 import 'package:online_training_template/ui/text_styles.dart';
 
-import '../../../../generated/l10n.dart';
-import '../../../../main.dart';
-import '../../../../ui/app_theme.dart';
-import '../widgets/category_list_widget.dart';
 import '../widgets/popular_course_list_widget.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({super.key});
+
   @override
-  _HomePageState createState() => _HomePageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   CategoryType categoryType = CategoryType.ui;
+  String? selectedSubject;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: ColorHelper.bgColor,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Column(
-          children: <Widget>[
-            SizedBox(
-              height: MediaQuery.of(context).padding.top,
-            ),
-            getAppBarUI(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Container(
-                  height: MediaQuery.of(context).size.height,
-                  child: Column(
-                    children: <Widget>[
-                      getSearchBarUI(),
-                      getCategoryUI(),
-                      Flexible(
-                        child: getPopularCourseUI(),
-                      ),
-                    ],
+    final currentUser = ref.watch(currentUserNotifierProvider);
+    final teacherDetailsAsync = ref.watch(
+      teacherDetailsProvider((
+        token: currentUser?.token ?? '',
+        teacherId: currentUser?.teacherId ?? 0
+      )),
+    );
+
+    return Scaffold(
+      backgroundColor: ColorHelper.bgColor,
+      body: teacherDetailsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (result) => result.fold(
+          (failure) => Center(child: Text(failure.message)),
+          (teacher) {
+            // Watch the course list when a subject is selected
+            final courseListAsync = ref.watch(
+              courseListProvider((
+                token: currentUser?.token ?? '',
+                teacherId: currentUser?.teacherId ?? 0,
+                subject: selectedSubject,
+              )),
+            );
+
+            return Column(
+              children: <Widget>[
+                SizedBox(height: MediaQuery.of(context).padding.top),
+                getAppBarUI(currentUser?.name ?? ''),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        getSearchBarUI(),
+                        getCategoryUI(teacher),
+                        if (courseListAsync != null)
+                          courseListAsync.when(
+                            loading: () => const Center(
+                                child: CircularProgressIndicator()),
+                            error: (e, _) => Center(child: Text('Error: $e')),
+                            data: (result) => result.fold(
+                              (failure) => Center(child: Text(failure.message)),
+                              (courses) => getCourseListUI(courses),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget getCategoryUI() {
+  Widget getCourseListUI(List<CourseModel> courses) {
+    return PopularCourseListView(
+      courses: courses,
+      callBack: (course) {
+        Get.toNamed(
+          Routes.courseInfoPage,
+          arguments: course,
+        );
+      },
+    );
+  }
+
+  Widget getCategoryUI(TeacherModel teacher) {
+    final List<dynamic> subjects = teacher.course ?? [];
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +112,7 @@ class _HomePageState extends State<HomePage> {
         const Padding(
           padding: EdgeInsets.only(top: 8.0, left: 18, right: 16),
           child: Text(
-            'Category',
+            'Subjects',
             textAlign: TextAlign.left,
             style: TextStyle(
               fontWeight: FontWeight.w600,
@@ -71,120 +122,98 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
-          child: Row(
-            children: <Widget>[
-              getButtonUI(CategoryType.ui, categoryType == CategoryType.ui),
-              const SizedBox(
-                width: 16,
-              ),
-              getButtonUI(
-                  CategoryType.coding, categoryType == CategoryType.coding),
-              const SizedBox(
-                width: 16,
-              ),
-              getButtonUI(
-                  CategoryType.basic, categoryType == CategoryType.basic),
-            ],
+          padding: const EdgeInsets.only(left: 16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: subjects.map((subject) {
+                final isSelected = subject == selectedSubject;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: getButtonUI(subject, isSelected),
+                );
+              }).toList(),
+            ),
           ),
         ),
-        const SizedBox(
-          height: 16,
-        ),
-        CategoryListView(
-          callBack: () {
-            moveTo();
-          },
-        ),
+        // const SizedBox(height: 16),
+        // CategoryListView(
+        //   callBack: () {
+        //     moveTo();
+        //   },
+        // ),
       ],
     );
   }
 
-  Widget getPopularCourseUI() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, left: 18, right: 16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Popular Course',
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 22,
-              letterSpacing: 0.27,
-              color: ColorHelper.grey900Color,
-            ),
-          ),
-          Flexible(
-            child: PopularCourseListView(
-              callBack: () {
-                moveTo();
-              },
-            ),
-          )
-        ],
+  Widget getButtonUI(String subject, bool isSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? ColorHelper.primaryColor : ColorHelper.cardBgColor,
+        borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        border: Border.all(color: ColorHelper.primaryColor),
       ),
-    );
-  }
-
-  void moveTo() {
-    Get.toNamed(Routes.courseInfoPage);
-  }
-
-  Widget getButtonUI(CategoryType categoryTypeData, bool isSelected) {
-    String txt = '';
-    if (CategoryType.ui == categoryTypeData) {
-      txt = 'Maths';
-    } else if (CategoryType.coding == categoryTypeData) {
-      txt = 'Assamese';
-    } else if (CategoryType.basic == categoryTypeData) {
-      txt = 'Science';
-    }
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-            color:
-                isSelected ? ColorHelper.primaryColor : ColorHelper.cardBgColor,
-            borderRadius: const BorderRadius.all(Radius.circular(24.0)),
-            border: Border.all(color: ColorHelper.primaryColor)),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: Colors.white24,
-            borderRadius: const BorderRadius.all(Radius.circular(24.0)),
-            onTap: () {
-              setState(() {
-                categoryType = categoryTypeData;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  top: 12, bottom: 12, left: 18, right: 18),
-              child: Center(
-                child: Text(
-                  txt,
-                  textAlign: TextAlign.left,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 0.27,
-                    color: isSelected
-                        ? AppTheme.nearlyWhite
-                        : AppTheme.primaryColor,
-                  ),
-                ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          splashColor: Colors.white24,
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+          onTap: () {
+            setState(() {
+              selectedSubject = subject;
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
+            child: Text(
+              subject,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                letterSpacing: 0.27,
+                color:
+                    isSelected ? AppTheme.nearlyWhite : AppTheme.primaryColor,
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  // Widget getPopularCourseUI() {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(top: 8.0, left: 18, right: 16),
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: <Widget>[
+  //         Text(
+  //           'Popular Course',
+  //           textAlign: TextAlign.left,
+  //           style: TextStyle(
+  //             fontWeight: FontWeight.w600,
+  //             fontSize: 22,
+  //             letterSpacing: 0.27,
+  //             color: ColorHelper.grey900Color,
+  //           ),
+  //         ),
+  //         Flexible(
+  //           child: PopularCourseListView(
+  //             callBack: () {
+  //               moveTo();
+  //             },
+  //           ),
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  void moveTo() {
+    Get.toNamed(Routes.courseInfoPage);
   }
 
   Widget getSearchBarUI() {
@@ -250,7 +279,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget getAppBarUI() {
+  Widget getAppBarUI(String name) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 18, right: 18),
       child: Row(
@@ -261,12 +290,12 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  S.of(context).chooseYour,
+                  'Prayashee',
                   textAlign: TextAlign.left,
                   style: AppTextStyles.caption,
                 ),
                 Text(
-                  S.of(context).designCourse,
+                  name,
                   textAlign: TextAlign.left,
                   style: AppTextStyles.title,
                 ),

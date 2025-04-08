@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:online_training_template/models/course_model.dart';
 import 'package:online_training_template/ui/color_helper.dart';
-
-import '../../../../ui/app_theme.dart';
+import 'package:online_training_template/ui/app_theme.dart';
+import 'package:online_training_template/app/const/const.dart';
 
 class CourseInfoPage extends StatefulWidget {
+  final CourseModel course;
+
+  const CourseInfoPage({super.key, required this.course});
+
   @override
   _CourseInfoPageState createState() => _CourseInfoPageState();
 }
@@ -22,8 +27,9 @@ class _CourseInfoPageState extends State<CourseInfoPage>
     animationController = AnimationController(
         duration: const Duration(milliseconds: 1000), vsync: this);
     animation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-        parent: animationController!,
-        curve: Interval(0, 1.0, curve: Curves.fastOutSlowIn)));
+      parent: animationController!,
+      curve: const Interval(0, 1.0, curve: Curves.fastOutSlowIn),
+    ));
     setData();
     super.initState();
   }
@@ -31,17 +37,11 @@ class _CourseInfoPageState extends State<CourseInfoPage>
   Future<void> setData() async {
     animationController?.forward();
     await Future<dynamic>.delayed(const Duration(milliseconds: 200));
-    setState(() {
-      opacity1 = 1.0;
-    });
+    setState(() => opacity1 = 1.0);
     await Future<dynamic>.delayed(const Duration(milliseconds: 200));
-    setState(() {
-      opacity2 = 1.0;
-    });
+    setState(() => opacity2 = 1.0);
     await Future<dynamic>.delayed(const Duration(milliseconds: 200));
-    setState(() {
-      opacity3 = 1.0;
-    });
+    setState(() => opacity3 = 1.0);
   }
 
   @override
@@ -49,6 +49,7 @@ class _CourseInfoPageState extends State<CourseInfoPage>
     final double tempHeight = MediaQuery.of(context).size.height -
         (MediaQuery.of(context).size.width / 1.2) +
         24.0;
+
     return Container(
       color: ColorHelper.bgColor,
       child: Scaffold(
@@ -59,7 +60,14 @@ class _CourseInfoPageState extends State<CourseInfoPage>
               children: <Widget>[
                 AspectRatio(
                   aspectRatio: 1.2,
-                  child: Image.asset('assets/webInterFace.png'),
+                  child: Image.network(
+                    '${ServerConstant.baseUrl}${widget.course.image_name}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -72,34 +80,34 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                 decoration: BoxDecoration(
                   color: ColorHelper.bgColor,
                   borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(32.0),
-                      topRight: Radius.circular(32.0)),
-                  boxShadow: <BoxShadow>[
+                    topLeft: Radius.circular(32.0),
+                    topRight: Radius.circular(32.0),
+                  ),
+                  boxShadow: [
                     BoxShadow(
-                        color: ColorHelper.greyColor.withOpacity(0.2),
-                        offset: const Offset(1.1, 1.1),
-                        blurRadius: 10.0),
+                      color: ColorHelper.greyColor.withOpacity(0.2),
+                      offset: const Offset(1.1, 1.1),
+                      blurRadius: 10.0,
+                    ),
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: SingleChildScrollView(
                     child: Container(
                       constraints: BoxConstraints(
-                          minHeight: infoHeight,
-                          maxHeight: tempHeight > infoHeight
-                              ? tempHeight
-                              : infoHeight),
+                        minHeight: infoHeight,
+                        maxHeight:
+                            tempHeight > infoHeight ? tempHeight : infoHeight,
+                      ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Padding(
                             padding: const EdgeInsets.only(
-                                top: 32.0, left: 18, right: 16),
+                                top: 32, left: 18, right: 16),
                             child: Text(
-                              'Web Design\nCourse',
-                              textAlign: TextAlign.left,
+                              widget.course.course_name,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 22,
@@ -113,39 +121,33 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                                 left: 16, right: 16, bottom: 8, top: 16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '₹${widget.course.sell_price ?? widget.course.price}',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      '₹${widget.course.price}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 Text(
-                                  '\$28.99',
-                                  textAlign: TextAlign.left,
+                                  'Validity: ${widget.course.validity} days',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w200,
-                                    fontSize: 22,
-                                    letterSpacing: 0.27,
-                                    color: AppTheme.primaryColor,
+                                    fontSize: 14,
+                                    color: ColorHelper.greyColor,
                                   ),
                                 ),
-                                Container(
-                                  child: Row(
-                                    children: <Widget>[
-                                      Text(
-                                        '4.3',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w200,
-                                          fontSize: 22,
-                                          letterSpacing: 0.27,
-                                          color: ColorHelper.grey900Color,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.star,
-                                        color: ColorHelper.primaryColor,
-                                        size: 24,
-                                      ),
-                                    ],
-                                  ),
-                                )
                               ],
                             ),
                           ),
@@ -153,12 +155,12 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                             duration: const Duration(milliseconds: 500),
                             opacity: opacity1,
                             child: Padding(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(8.0),
                               child: Row(
                                 children: <Widget>[
-                                  getTimeBoxUI('24', 'Classe'),
-                                  getTimeBoxUI('2hours', 'Time'),
-                                  getTimeBoxUI('24', 'Seat'),
+                                  getTimeBoxUI("24", "Classes"),
+                                  getTimeBoxUI("2 hrs", "Duration"),
+                                  getTimeBoxUI("Unlimited", "Access"),
                                 ],
                               ),
                             ),
@@ -168,19 +170,15 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                               duration: const Duration(milliseconds: 500),
                               opacity: opacity2,
                               child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 16, right: 16, top: 8, bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
                                 child: Text(
-                                  'Lorem ipsum is simply dummy text of printing & typesetting industry, Lorem ipsum is simply dummy text of printing & typesetting industry.',
+                                  widget.course.course_des,
                                   textAlign: TextAlign.justify,
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w200,
                                     fontSize: 14,
-                                    letterSpacing: 0.27,
                                     color: ColorHelper.grey700Color,
                                   ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
@@ -190,60 +188,43 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                             opacity: opacity3,
                             child: Padding(
                               padding: const EdgeInsets.only(
-                                  left: 16, bottom: 16, right: 16),
+                                  left: 16, right: 16, bottom: 16),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: <Widget>[
                                   Container(
                                     width: 48,
                                     height: 48,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: ColorHelper.cardBgColor,
-                                        borderRadius: const BorderRadius.all(
-                                          Radius.circular(16.0),
-                                        ),
-                                        border: Border.all(
-                                            color: ColorHelper.greyColor
-                                                .withOpacity(0.2)),
-                                      ),
-                                      child: Icon(
-                                        Icons.add,
-                                        color: AppTheme.primaryColor,
-                                        size: 28,
+                                    decoration: BoxDecoration(
+                                      color: ColorHelper.cardBgColor,
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      border: Border.all(
+                                        color: ColorHelper.greyColor
+                                            .withOpacity(0.2),
                                       ),
                                     ),
+                                    child: const Icon(Icons.favorite_border),
                                   ),
-                                  const SizedBox(
-                                    width: 16,
-                                  ),
+                                  const SizedBox(width: 16),
                                   Expanded(
-                                    child: Container(
+                                    child: SizedBox(
                                       height: 48,
-                                      decoration: BoxDecoration(
-                                        color: ColorHelper.primaryColor,
-                                        borderRadius: const BorderRadius.all(
-                                          Radius.circular(16.0),
-                                        ),
-                                        boxShadow: <BoxShadow>[
-                                          BoxShadow(
-                                              color: ColorHelper.primaryColor
-                                                  .withOpacity(0.5),
-                                              offset: const Offset(1.1, 1.1),
-                                              blurRadius: 10.0),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'Join Course',
-                                          textAlign: TextAlign.left,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 18,
-                                            letterSpacing: 0.0,
-                                            color: ColorHelper.bgColor,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppTheme.primaryColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                           ),
+                                        ),
+                                        onPressed: () {
+                                          // Handle course enrollment
+                                        },
+                                        child: const Text(
+                                          'Join Course',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.white),
                                         ),
                                       ),
                                     ),
@@ -253,8 +234,7 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                             ),
                           ),
                           SizedBox(
-                            height: MediaQuery.of(context).padding.bottom,
-                          )
+                              height: MediaQuery.of(context).padding.bottom),
                         ],
                       ),
                     ),
@@ -263,26 +243,26 @@ class _CourseInfoPageState extends State<CourseInfoPage>
               ),
             ),
             Positioned(
-              top: (MediaQuery.of(context).size.width / 1.2) - 24.0 - 35,
+              top: (MediaQuery.of(context).size.width / 1.2) - 59,
               right: 35,
               child: ScaleTransition(
-                alignment: Alignment.center,
                 scale: CurvedAnimation(
-                    parent: animationController!, curve: Curves.fastOutSlowIn),
+                  parent: animationController!,
+                  curve: Curves.fastOutSlowIn,
+                ),
                 child: Card(
                   color: ColorHelper.primaryColor,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50.0)),
+                    borderRadius: BorderRadius.circular(50.0),
+                  ),
                   elevation: 10.0,
-                  child: Container(
+                  child: const SizedBox(
                     width: 60,
                     height: 60,
-                    child: Center(
-                      child: Icon(
-                        Icons.favorite,
-                        color: ColorHelper.bgColor,
-                        size: 30,
-                      ),
+                    child: Icon(
+                      Icons.favorite,
+                      color: Colors.white,
+                      size: 30,
                     ),
                   ),
                 ),
@@ -298,13 +278,8 @@ class _CourseInfoPageState extends State<CourseInfoPage>
                   child: InkWell(
                     borderRadius:
                         BorderRadius.circular(AppBar().preferredSize.height),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      color: ColorHelper.fixedDarkColor,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.arrow_back_ios),
                   ),
                 ),
               ),
@@ -321,43 +296,34 @@ class _CourseInfoPageState extends State<CourseInfoPage>
       child: Container(
         decoration: BoxDecoration(
           color: ColorHelper.cardBgColor,
-          borderRadius: const BorderRadius.all(Radius.circular(16.0)),
-          boxShadow: <BoxShadow>[
+          borderRadius: BorderRadius.circular(16.0),
+          boxShadow: [
             BoxShadow(
-                color: AppTheme.grey.withOpacity(0.2),
-                offset: const Offset(1.1, 1.1),
-                blurRadius: 8.0),
+              color: AppTheme.grey.withOpacity(0.2),
+              offset: const Offset(1.1, 1.1),
+              blurRadius: 8.0,
+            ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.only(
-              left: 18.0, right: 18.0, top: 12.0, bottom: 12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                text1,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  letterSpacing: 0.27,
-                  color: AppTheme.primaryColor,
-                ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+        child: Column(
+          children: <Widget>[
+            Text(
+              text1,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
               ),
-              Text(
-                txt2,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w200,
-                  fontSize: 14,
-                  letterSpacing: 0.27,
-                  color:ColorHelper.greyColor,
-                ),
+            ),
+            Text(
+              txt2,
+              style: TextStyle(
+                fontSize: 14,
+                color: ColorHelper.greyColor,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

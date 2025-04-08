@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
 class UserModel {
@@ -8,6 +9,7 @@ class UserModel {
   String? standard;
   String? subject;
   String? course;
+  int? teacherId;
   UserModel({
     required this.id,
     required this.token,
@@ -16,6 +18,7 @@ class UserModel {
     this.standard,
     this.subject,
     this.course,
+    this.teacherId,
   });
 
   UserModel copyWith({
@@ -26,6 +29,7 @@ class UserModel {
     String? standard,
     String? subject,
     String? course,
+    int? teacherId,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -35,6 +39,7 @@ class UserModel {
       standard: standard ?? this.standard,
       subject: subject ?? this.subject,
       course: course ?? this.course,
+      teacherId: teacherId ?? this.teacherId,
     );
   }
 
@@ -47,6 +52,7 @@ class UserModel {
       'standard': standard,
       'subject': subject,
       'course': course,
+      'teacher_id': teacherId,
     };
   }
 
@@ -59,6 +65,7 @@ class UserModel {
       standard: map['standard'] != null ? map['standard'] as String : null,
       subject: map['subject'] != null ? map['subject'] as String : null,
       course: map['course'] != null ? map['course'] as String : null,
+      teacherId: map['teacher_id'] != null ? map['teacher_id'] as int : null,
     );
   }
 
@@ -69,7 +76,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, token: $token, name: $name, phone: $phone, standard: $standard, subject: $subject, course: $course)';
+    return 'UserModel(id: $id, token: $token, name: $name, phone: $phone, standard: $standard, subject: $subject, course: $course, teacherId: $teacherId)';
   }
 
   @override
@@ -82,7 +89,8 @@ class UserModel {
         other.phone == phone &&
         other.standard == standard &&
         other.subject == subject &&
-        other.course == course;
+        other.course == course &&
+        other.teacherId == teacherId;
   }
 
   @override
@@ -93,6 +101,7 @@ class UserModel {
         phone.hashCode ^
         standard.hashCode ^
         subject.hashCode ^
-        course.hashCode;
+        course.hashCode ^
+        teacherId.hashCode;
   }
 }

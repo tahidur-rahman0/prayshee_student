@@ -7,6 +7,7 @@ import 'package:online_training_template/modules/login/presentation/bindings/log
 import 'package:online_training_template/modules/login/presentation/pages/login_page.dart';
 import 'package:online_training_template/modules/signup/presentation/bindings/signup_binding.dart';
 import 'package:online_training_template/modules/signup/presentation/pages/signup_page.dart';
+import 'package:online_training_template/models/course_model.dart';
 
 part 'app_routes.dart';
 
@@ -22,7 +23,7 @@ class AppPages {
     GetPage(name: Routes.home, page: () => HomePage(), binding: HomeBinding()),
     GetPage(
         name: Routes.courseInfoPage,
-        page: () => CourseInfoPage(),
+        page: () => CourseInfoPage(course: Get.arguments as CourseModel),
         binding: CourseInfoBinding()),
     GetPage(
         name: Routes.loginPage,

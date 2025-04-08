@@ -21,6 +21,7 @@ class SignupPage extends ConsumerStatefulWidget {
 class _SignUpPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _teacherCodeController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -142,6 +143,17 @@ class _SignUpPageState extends ConsumerState<SignupPage> {
                         ),
                         const SizedBox(height: 20),
 
+                        CustomTextFormField(
+                          controller: _teacherCodeController,
+                          hintText: "Enter Teacher Code",
+                          labelText: "Code",
+                          textInputAction: TextInputAction.next,
+                          validator: (value) => value == null || value.isEmpty
+                              ? "Teacher Code is required"
+                              : null,
+                        ),
+                        const SizedBox(height: 20),
+
                         /// **🔹 Password Field**
                         CustomTextFormField(
                           controller: _passwordController,
@@ -175,12 +187,19 @@ class _SignUpPageState extends ConsumerState<SignupPage> {
                             : CustomElevatedButton(
                                 label: "Sign Up",
                                 onPressed: () async {
+                                  String teacherCode = _teacherCodeController
+                                      .text
+                                      .trim()
+                                      .toString();
+                                  int teacherId =
+                                      int.parse(teacherCode.substring(5));
                                   if (_formKey.currentState!.validate()) {
                                     await ref
                                         .read(authViewModelProvider.notifier)
                                         .signUpUser(
                                             name: _nameController.text.trim(),
                                             phone: _phoneController.text.trim(),
+                                            teacherId: teacherId,
                                             password:
                                                 _passwordController.text.trim(),
                                             confirmPassword:
