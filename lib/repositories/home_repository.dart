@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/app/core/failure/failure.dart';
 import 'package:online_training_template/models/course_model.dart';
+import 'package:online_training_template/models/pdfs_model.dart';
 import 'package:online_training_template/models/teacher_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'home_repository.g.dart';
@@ -81,6 +82,44 @@ class HomeRepository {
 
       for (final map in dataList) {
         course.add(CourseModel.fromMap(map));
+      }
+
+      return Right(course);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<PdfsModel>>> getPdfMaterials({
+    required String token,
+    required int courseId,
+  }) async {
+    try {
+      print('${ServerConstant.serverURL}/myteacherpdfs/$courseId');
+      print(courseId);
+      final res = await http.get(
+        Uri.parse('${ServerConstant.serverURL}/myteacherpdfs/$courseId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      var resBodyMap = jsonDecode(res.body);
+      print(resBodyMap);
+      if (res.statusCode != 200) {
+        return Left(AppFailure(resBodyMap['errors']));
+      }
+
+      // Handle empty data case
+      if (resBodyMap['data'] == null || resBodyMap['data'].isEmpty) {
+        return Right([]);
+      }
+
+      List<PdfsModel> course = [];
+      final dataList = resBodyMap['data'] as List;
+
+      for (final map in dataList) {
+        course.add(PdfsModel.fromMap(map));
       }
 
       return Right(course);

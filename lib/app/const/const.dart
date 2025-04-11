@@ -6,8 +6,8 @@ var defaultPrimaryColor = Colors.purple;
 
 class ServerConstant {
   static String serverURL = Platform.isAndroid
-      ? 'http://192.168.31.72:8000/api'
-      : 'http://192.168.31.72:8000/api';
+      ? 'https://prayashee.com/api'
+      : 'https://prayashee.com/api';
 
-  static String baseUrl = 'http://192.168.31.72:8000';
+  static String baseUrl = 'https://prayashee.com';
 }

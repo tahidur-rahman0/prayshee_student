@@ -89,7 +89,7 @@ class AuthRemoteRepository {
       print("Full Response: $resBodyMap");
 
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['errors'] ?? 'Something went wrong'));
+        return Left(AppFailure(resBodyMap['errors'] ?? 'Invalid Creadentials'));
       }
 
       // Extract token
