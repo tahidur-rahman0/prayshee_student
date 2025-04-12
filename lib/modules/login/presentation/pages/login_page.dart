@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:online_training_template/app/utils/errors.dart';
@@ -24,6 +25,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+   DateTime? _lastBackPressed;
+
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+
+    if (_lastBackPressed == null || now.difference(_lastBackPressed!) >const Duration(seconds: 2)) {
+      _lastBackPressed = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+       const SnackBar(
+          content: Text('Press back again to exit'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+
+    SystemNavigator.pop();
+  return false;
+  }
 
   @override
   void initState() {
@@ -62,42 +83,45 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
       },
     );
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: ColorHelper.primaryColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top space and theme toggle button
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.all(Insets.l),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: InkWell(
-                    onTap: () {
-                      Get.find<ThemeController>().toggleTheme();
-                      setState(() {});
-                    },
-                    child: Obx(
-                      () => Icon(
-                          Get.find<ThemeController>().currentThemeMode.value ==
-                                  ThemeMode.dark
-                              ? Icons.light_mode
-                              : Icons.dark_mode),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: ColorHelper.primaryColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top space and theme toggle button
+              Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: EdgeInsets.all(Insets.l),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: InkWell(
+                      onTap: () {
+                        Get.find<ThemeController>().toggleTheme();
+                        setState(() {});
+                      },
+                      child: Obx(
+                        () => Icon(
+                            Get.find<ThemeController>().currentThemeMode.value ==
+                                    ThemeMode.dark
+                                ? Icons.light_mode
+                                : Icons.dark_mode),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-
-            // Main content
-            Expanded(
-              flex: 9,
-              child: buildCard(size),
-            ),
-          ],
+      
+              // Main content
+              Expanded(
+                flex: 9,
+                child: buildCard(size),
+              ),
+            ],
+          ),
         ),
       ),
     );

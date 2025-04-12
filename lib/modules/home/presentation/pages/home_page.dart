@@ -14,6 +14,7 @@ import 'package:online_training_template/ui/routes/app_pages.dart';
 import 'package:online_training_template/ui/text_styles.dart';
 
 import '../widgets/popular_course_list_widget.dart';
+import 'profile/profile_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -302,10 +303,18 @@ class _HomePageState extends ConsumerState<HomePage> {
               ],
             ),
           ),
-          Container(
-            width: 60,
-            height: 60,
-            child: Image.asset('assets/userImage.png'),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+            },
+            child: Container(
+              width: 60,
+              height: 60,
+              child: Image.asset('assets/userImage.png'),
+            ),
           )
         ],
       ),
