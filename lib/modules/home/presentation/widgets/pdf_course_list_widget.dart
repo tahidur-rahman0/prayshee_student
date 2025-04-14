@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/models/course_model.dart';
 import 'package:online_training_template/models/pdfs_model.dart';
+import 'package:online_training_template/modules/pdf_viewer/flutter_pdfview.dart';
 
 class PdfCourseListView extends StatefulWidget {
   final List<PdfsModel> courses;
@@ -102,7 +103,15 @@ class CourseCard extends StatelessWidget {
           child: Transform.translate(
             offset: Offset(0.0, 50 * (1.0 - animation.value)),
             child: InkWell(
-              onTap: callback,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PDFViewerPage(
+                            pdf: course.pdf_url,
+                          )),
+                );
+              },
               child: Container(
                 height: 280,
                 decoration: BoxDecoration(
@@ -173,19 +182,19 @@ class CourseCard extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              Text(
+                                course.is_paid == 1 ? 'Paid' : 'Free',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                               // Text(
-                              //   '₹${course.sell_price}',
-                              //   style: const TextStyle(
-                              //     fontSize: 16,
-                              //     fontWeight: FontWeight.bold,
-                              //     color: Colors.white,
-                              //   ),
-                              // ),
-                              // Text(
-                              //   '${course.validity} days',
+                              //   '${course.download_able} days',
                               //   style: const TextStyle(
                               //     fontSize: 13,
-                              //     color: Colors.black,
+                              //     color: Colors.white,
                               //   ),
                               // ),
                             ],
