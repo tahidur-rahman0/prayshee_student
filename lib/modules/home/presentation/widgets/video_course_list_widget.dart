@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:online_training_template/app/const/const.dart';
-import 'package:online_training_template/models/pdfs_model.dart';
-import 'package:online_training_template/modules/pdf_viewer/flutter_pdfview.dart';
+import 'package:online_training_template/models/video_model.dart';
+import 'package:online_training_template/modules/video_payer/video_payer.dart';
 
-class PdfCourseListView extends StatefulWidget {
-  final List<PdfsModel> courses;
+class VideoCourseListView extends StatefulWidget {
+  final List<VideoModel> courses;
 
-  const PdfCourseListView({
+  const VideoCourseListView({
     Key? key,
     required this.courses,
   }) : super(key: key);
 
   @override
-  _PdfCourseListViewState createState() => _PdfCourseListViewState();
+  _VideoCourseListViewState createState() => _VideoCourseListViewState();
 }
 
-class _PdfCourseListViewState extends State<PdfCourseListView>
+class _VideoCourseListViewState extends State<VideoCourseListView>
     with TickerProviderStateMixin {
   AnimationController? animationController;
 
@@ -79,7 +79,7 @@ class _PdfCourseListViewState extends State<PdfCourseListView>
 }
 
 class CourseCard extends StatelessWidget {
-  final PdfsModel course;
+  final VideoModel course;
   final AnimationController animationController;
   final Animation<double> animation;
   final VoidCallback? callback;
@@ -106,16 +106,17 @@ class CourseCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => PDFViewerPage(
-                            pdf: course.pdf_url,
-                          )),
+                    builder: (context) => VideoPlayerPage(
+                      googleDriveUrl: course.youtube_url,
+                    ),
+                  ),
                 );
               },
               child: Container(
                 height: 280,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 8,

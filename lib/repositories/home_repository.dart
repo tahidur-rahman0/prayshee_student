@@ -7,6 +7,7 @@ import 'package:online_training_template/app/core/failure/failure.dart';
 import 'package:online_training_template/models/course_model.dart';
 import 'package:online_training_template/models/pdfs_model.dart';
 import 'package:online_training_template/models/teacher_model.dart';
+import 'package:online_training_template/models/video_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'home_repository.g.dart';
 
@@ -95,10 +96,11 @@ class HomeRepository {
     required int courseId,
   }) async {
     try {
-      print('${ServerConstant.serverURL}/myteacherpdfs/$courseId');
+      String url = '${ServerConstant.serverURL}/myteacherpdfs/$courseId';
+      print(url);
       print(courseId);
       final res = await http.get(
-        Uri.parse('${ServerConstant.serverURL}/myteacherpdfs/$courseId'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -120,6 +122,45 @@ class HomeRepository {
 
       for (final map in dataList) {
         course.add(PdfsModel.fromMap(map));
+      }
+
+      return Right(course);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, List<VideoModel>>> getVideoMaterials({
+    required String token,
+    required int courseId,
+  }) async {
+    try {
+      String url = '${ServerConstant.serverURL}/myteachervideos/$courseId';
+      print(url);
+      print(courseId);
+      final res = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      var resBodyMap = jsonDecode(res.body);
+      print(resBodyMap);
+      if (res.statusCode != 200) {
+        return Left(AppFailure(resBodyMap['errors']));
+      }
+
+      // Handle empty data case
+      if (resBodyMap['data'] == null || resBodyMap['data'].isEmpty) {
+        return const Right([]);
+      }
+
+      List<VideoModel> course = [];
+      final dataList = resBodyMap['data'] as List;
+
+      for (final map in dataList) {
+        course.add(VideoModel.fromMap(map));
       }
 
       return Right(course);
