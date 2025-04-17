@@ -106,8 +106,8 @@ class CourseCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VideoPlayerPage(
-                      googleDriveUrl: course.youtube_url,
+                    builder: (context) => VideoPlayerSection(
+                      video: course,
                     ),
                   ),
                 );

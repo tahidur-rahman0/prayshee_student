@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:online_training_template/app/const/const.dart';
+import 'package:flutter_upi_india/flutter_upi_india.dart';
 
 enum PaymentMethod { online, cash }
 
@@ -10,8 +11,8 @@ class ShoppingCartPage extends StatefulWidget {
   final String description;
   final int totalPdfs;
   final int totalVideos;
-  final String price;  
-  final String mrp;    
+  final String price;
+  final String mrp;
   final int validity;
   final String image;
 
@@ -35,6 +36,24 @@ class ShoppingCartPage extends StatefulWidget {
 class _ShoppingCartPageState extends State<ShoppingCartPage> {
   final NumberFormat currencyFormat = NumberFormat.currency(symbol: '\$');
   PaymentMethod _selectedPaymentMethod = PaymentMethod.online;
+  List<ApplicationMeta>? upiApps;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUpiApps();
+  }
+
+  Future<void> _fetchUpiApps() async {
+    try {
+      upiApps = await UpiPay.getInstalledUpiApplications(
+        statusType: UpiApplicationDiscoveryAppStatusType.all,
+      );
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error fetching UPI apps: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +87,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   _buildDetailRow("PDF Courses", "${widget.totalPdfs} PDFs"),
                   _buildDetailRow(
                       "Video Courses", "${widget.totalVideos} Videos"),
-                  _buildDetailRow("Validity", '${widget.validity.toString()} Months'),
+                  _buildDetailRow(
+                      "Validity", '${widget.validity.toString()} Months'),
 
                   const SizedBox(height: 16),
                   const Divider(),
@@ -107,18 +127,18 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Container(
-  width: double.infinity,
-  height: 150,
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(8),
-    image: DecorationImage(
-      image: NetworkImage('${ServerConstant.baseUrl}${widget.image}'), 
-      fit: BoxFit.cover,
-      // Optional: Add a placeholder while loading
-      onError: (exception, stackTrace) => const Icon(Icons.error),
-    ),
-  ),
-),
+          width: double.infinity,
+          height: 150,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            image: DecorationImage(
+              image: NetworkImage('${ServerConstant.baseUrl}${widget.image}'),
+              fit: BoxFit.cover,
+              // Optional: Add a placeholder while loading
+              onError: (exception, stackTrace) => const Icon(Icons.error),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -152,7 +172,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     );
   }
 
-  Widget _buildPriceRow(String label, String amount, 
+  Widget _buildPriceRow(String label, String amount,
       {bool isOriginal = false, bool isTotal = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -172,7 +192,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             style: TextStyle(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
               fontSize: isTotal ? 18 : 16,
-              color: isTotal ? defaultPrimaryColor : (isOriginal ? Colors.grey : Colors.black),
+              color: isTotal
+                  ? defaultPrimaryColor
+                  : (isOriginal ? Colors.grey : Colors.black),
               decoration: isOriginal ? TextDecoration.lineThrough : null,
             ),
           ),
@@ -224,7 +246,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildPaymentOption(
-                  "Cash on Delivery",
+                  "Pay cash Request",
                   PaymentMethod.cash,
                   Icons.money,
                 ),
@@ -232,7 +254,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Pay Button
           SizedBox(
             width: double.infinity,
@@ -244,15 +266,96 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () {
-                // Handle payment
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Payment of ${currencyFormat.format(priceValue)} initiated via ${_selectedPaymentMethod == PaymentMethod.online ? 'Online' : 'Cash'}',
+              onPressed: () async {
+                if (_selectedPaymentMethod == PaymentMethod.cash) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Cash request submitted successfully!'),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  if (upiApps == null || upiApps!.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No UPI apps installed on this device.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) {
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'Choose UPI App',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                            GridView.count(
+                              crossAxisCount: 4,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: upiApps!.map((app) {
+                                return Material(
+                                  child: InkWell(
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                      final transactionRef = DateTime.now()
+                                          .millisecondsSinceEpoch
+                                          .toString();
+
+                                      final response =
+                                          await UpiPay.initiateTransaction(
+                                        amount: '1',
+                                        app: app.upiApplication,
+                                        receiverName: 'Tohidur Rahman',
+                                        receiverUpiAddress:
+                                            'rahmantohidur12@oksbi',
+                                        transactionRef: transactionRef,
+                                        transactionNote:
+                                            'Payment for ${widget.title}',
+                                      );
+
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Transaction status: ${response.status}',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        app.iconImage(48),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          app.upiApplication.getAppName(),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }
               },
               child: const Text(
                 "PAY NOW",
@@ -269,7 +372,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     );
   }
 
-  Widget _buildPaymentOption(String title, PaymentMethod method, IconData icon) {
+  Widget _buildPaymentOption(
+      String title, PaymentMethod method, IconData icon) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -291,7 +395,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           children: [
             Icon(
               icon,
-              color: _selectedPaymentMethod == method ? defaultPrimaryColor : Colors.grey,
+              color: _selectedPaymentMethod == method
+                  ? defaultPrimaryColor
+                  : Colors.grey,
             ),
             const SizedBox(width: 8),
             Text(
