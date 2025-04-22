@@ -291,16 +291,21 @@ class _CourseInfoPageState extends ConsumerState<CourseInfoPage> {
                                               builder: (context) =>
                                                   ShoppingCartPage(
                                                     id: widget.course.id,
-                                                    title: widget.course.course_name,
+                                                    title: widget
+                                                        .course.course_name,
                                                     description: widget
                                                         .course.course_des,
                                                     totalPdfs: pdfs.length,
                                                     totalVideos: totalVideos,
-                                                    price:widget.course.sell_price,
+                                                    price: widget
+                                                        .course.sell_price,
                                                     mrp: widget.course.price,
                                                     validity:
-                                                      widget.course.validity,
-                                                    image: widget.course.image_name,
+                                                        widget.course.validity,
+                                                    image: widget
+                                                        .course.image_name,
+                                                    teacherId: widget
+                                                        .course.teacher_id,
                                                   )),
                                         );
                                       },

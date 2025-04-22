@@ -9,6 +9,7 @@ class CourseModel {
   final String price;
   final String sell_price;
   final int validity;
+  final int teacher_id;
   CourseModel({
     required this.id,
     required this.course_name,
@@ -17,6 +18,7 @@ class CourseModel {
     required this.price,
     required this.sell_price,
     required this.validity,
+    required this.teacher_id,
   });
 
   CourseModel copyWith({
@@ -27,6 +29,7 @@ class CourseModel {
     String? price,
     String? sell_price,
     int? validity,
+    int? teacher_id,
   }) {
     return CourseModel(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class CourseModel {
       price: price ?? this.price,
       sell_price: sell_price ?? this.sell_price,
       validity: validity ?? this.validity,
+      teacher_id: teacher_id ?? this.teacher_id,
     );
   }
 
@@ -48,6 +52,7 @@ class CourseModel {
       'price': price,
       'sell_price': sell_price,
       'validity': validity,
+      'teacher_id': teacher_id,
     };
   }
 
@@ -60,6 +65,7 @@ class CourseModel {
       price: map['price'] as String,
       sell_price: map['sell_price'] as String,
       validity: map['validity'] as int,
+      teacher_id: map['teacher_id'] as int,
     );
   }
 
@@ -70,7 +76,7 @@ class CourseModel {
 
   @override
   String toString() {
-    return 'CourseModel(id: $id, course_name: $course_name, course_des: $course_des, image_name: $image_name, price: $price, sell_price: $sell_price, validity: $validity)';
+    return 'CourseModel(id: $id, course_name: $course_name, course_des: $course_des, image_name: $image_name, price: $price, sell_price: $sell_price, validity: $validity, teacher_id: $teacher_id)';
   }
 
   @override
@@ -83,7 +89,8 @@ class CourseModel {
         other.image_name == image_name &&
         other.price == price &&
         other.sell_price == sell_price &&
-        other.validity == validity;
+        other.validity == validity &&
+        other.teacher_id == teacher_id;
   }
 
   @override
@@ -94,6 +101,7 @@ class CourseModel {
         image_name.hashCode ^
         price.hashCode ^
         sell_price.hashCode ^
-        validity.hashCode;
+        validity.hashCode ^
+        teacher_id.hashCode;
   }
 }

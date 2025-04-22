@@ -106,7 +106,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
   }
 
   String _convertToDirectUrl(String googleDriveUrl) {
-    // Convert Google Drive shareable link to direct download URL
     if (googleDriveUrl.contains('drive.google.com')) {
       final fileId = googleDriveUrl.split('/d/')[1].split('/')[0];
       return 'https://drive.google.com/uc?export=download&id=$fileId';

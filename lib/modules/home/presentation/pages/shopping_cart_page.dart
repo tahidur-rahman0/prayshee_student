@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:online_training_template/app/const/const.dart';
 import 'package:flutter_upi_india/flutter_upi_india.dart';
+import 'package:online_training_template/models/user_model.dart';
+import 'package:online_training_template/modules/home/presentation/pages/order_confirmed_page.dart';
+import 'package:online_training_template/repositories/transaction_repository.dart';
+import 'package:online_training_template/repositories/auth_local_repository.dart';
+import 'package:online_training_template/providers/current_user_notifier.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum PaymentMethod { online, cash }
 
-class ShoppingCartPage extends StatefulWidget {
+class ShoppingCartPage extends ConsumerStatefulWidget {
   final int id;
   final String title;
   final String description;
@@ -15,6 +22,7 @@ class ShoppingCartPage extends StatefulWidget {
   final String mrp;
   final int validity;
   final String image;
+  final int teacherId;
 
   const ShoppingCartPage({
     super.key,
@@ -27,16 +35,18 @@ class ShoppingCartPage extends StatefulWidget {
     required this.mrp,
     required this.validity,
     required this.image,
+    required this.teacherId,
   });
 
   @override
-  State<ShoppingCartPage> createState() => _ShoppingCartPageState();
+  ConsumerState<ShoppingCartPage> createState() => _ShoppingCartPageState();
 }
 
-class _ShoppingCartPageState extends State<ShoppingCartPage> {
-  final NumberFormat currencyFormat = NumberFormat.currency(symbol: '\$');
+class _ShoppingCartPageState extends ConsumerState<ShoppingCartPage> {
+  final NumberFormat currencyFormat = NumberFormat.currency(symbol: '\₹');
   PaymentMethod _selectedPaymentMethod = PaymentMethod.online;
   List<ApplicationMeta>? upiApps;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -52,6 +62,75 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       setState(() {});
     } catch (e) {
       debugPrint('Error fetching UPI apps: $e');
+    }
+  }
+
+  Future<void> _processTransaction(String paymentId, String paymentMode) async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final token = ref.read(authLocalRepositoryProvider).getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final currentUser = ref.read(currentUserNotifierProvider);
+      if (currentUser == null) {
+        throw Exception('No user data found');
+      }
+
+      final transactionRepo = ref.read(transactionRepositoryProvider);
+      final result = await transactionRepo.createTransection(
+        token: token,
+        teacherId: widget.teacherId,
+        studentId: currentUser.id,
+        studentName: currentUser.name,
+        courseId: widget.id,
+        courseName: widget.title,
+        price: double.parse(widget.price),
+        paymentId: paymentId,
+        paymentMode: paymentMode,
+      );
+
+      result.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Transaction failed: ${failure.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        (transaction) {
+          // Navigate to order confirmation page
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderConfirmationPage(
+                  courseId: widget.id,
+                  courseTitle: widget.title,
+                  amount: widget.price,
+                  transactionId: transaction.payment_id,
+                ),
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error processing transaction: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
@@ -95,9 +174,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   const SizedBox(height: 16),
 
                   // Pricing
-                  _buildPriceRow("MRP", widget.mrp, isOriginal: true),
+                  _buildPriceRow("MRP", '₹ ${widget.mrp}', isOriginal: true),
                   _buildPriceRow("Discount", currencyFormat.format(discount)),
-                  _buildPriceRow("You Pay", widget.price, isTotal: true),
+                  _buildPriceRow("You Pay", '₹ ${widget.price}', isTotal: true),
 
                   Text(
                     "You save ${discountPercentage}% (${currencyFormat.format(discount)})",
@@ -268,10 +347,11 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               ),
               onPressed: () async {
                 if (_selectedPaymentMethod == PaymentMethod.cash) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Cash request submitted successfully!'),
-                    ),
+                  int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+                  _processTransaction(
+                    timestamp.toString(),
+                    'Cash',
                   );
                 } else {
                   if (upiApps == null || upiApps!.isEmpty) {
@@ -315,24 +395,32 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
                                       final response =
                                           await UpiPay.initiateTransaction(
-                                        amount: '1',
+                                        amount: widget.price,
                                         app: app.upiApplication,
                                         receiverName: 'Tohidur Rahman',
                                         receiverUpiAddress:
-                                            'rahmantohidur12@oksbi',
+                                            'rahmantohidur12-2@oksbi',
                                         transactionRef: transactionRef,
                                         transactionNote:
                                             'Payment for ${widget.title}',
                                       );
 
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Transaction status: ${response.status}',
+                                      if (response.status == 'SUCCESS') {
+                                        await _processTransaction(
+                                          response.txnId ?? '',
+                                          'UPI',
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Transaction failed: ${response.status}',
+                                            ),
+                                            backgroundColor: Colors.red,
                                           ),
-                                        ),
-                                      );
+                                        );
+                                      }
                                     },
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
@@ -402,6 +490,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             const SizedBox(width: 8),
             Text(
               title,
+              overflow: TextOverflow.fade,
               style: TextStyle(
                 fontWeight: _selectedPaymentMethod == method
                     ? FontWeight.bold
