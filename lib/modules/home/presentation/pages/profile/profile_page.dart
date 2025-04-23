@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:online_training_template/app/const/const.dart';
+import 'package:online_training_template/modules/home/presentation/pages/mycourses_page.dart';
 import 'package:online_training_template/modules/login/presentation/pages/login_page.dart';
 import 'package:online_training_template/repositories/auth_local_repository.dart';
 
@@ -33,6 +34,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               text: "My Account",
               icon: Icons.face_5,
               press: () => {},
+            ),
+            ProfileMenu(
+              text: "My Courses",
+              icon: Icons.subject,
+              press: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyCoursePage()),
+                );
+              },
             ),
             ProfileMenu(
               text: "Notifications",

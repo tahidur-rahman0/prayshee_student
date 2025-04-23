@@ -8,10 +8,10 @@ class TransactionModel {
   final String student_name;
   final int course_id;
   final String course_name;
-  final int price;
+  final String price;
   final String payment_id;
   final String payment_mode;
-  final int platform_fee;
+  final String platform_fee;
   final int status;
   TransactionModel({
     required this.id,
@@ -34,10 +34,10 @@ class TransactionModel {
     String? student_name,
     int? course_id,
     String? course_name,
-    int? price,
+    String? price,
     String? payment_id,
     String? payment_mode,
-    int? platform_fee,
+    String? platform_fee,
     int? status,
   }) {
     return TransactionModel(
@@ -79,10 +79,10 @@ class TransactionModel {
       student_name: map['student_name'] as String,
       course_id: map['course_id'] as int,
       course_name: map['course_name'] as String,
-      price: map['price'] as int,
+      price: map['price'] as String,
       payment_id: map['payment_id'] as String,
       payment_mode: map['payment_mode'] as String,
-      platform_fee: map['platform_fee'] as int,
+      platform_fee: map['platform_fee'] as String,
       status: map['status'] as int,
     );
   }

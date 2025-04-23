@@ -63,4 +63,43 @@ class TransactionRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  Future<Either<AppFailure, List<TransactionModel>>> getMyCourses({
+    required String token,
+    required int studentId,
+  }) async {
+    try {
+      print('${ServerConstant.serverURL}/student/transactions/15');
+      print(studentId);
+      final res = await http.get(
+        Uri.parse(
+            '${ServerConstant.serverURL}/student/transactions/$studentId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      var resBodyMap = jsonDecode(res.body);
+      print(resBodyMap);
+      if (res.statusCode != 200) {
+        return Left(AppFailure(resBodyMap['errors']));
+      }
+
+      // Handle empty data case
+      if (resBodyMap['data'] == null || resBodyMap['data'].isEmpty) {
+        return Right([]);
+      }
+
+      List<TransactionModel> course = [];
+      final dataList = resBodyMap['data'] as List;
+
+      for (final map in dataList) {
+        course.add(TransactionModel.fromMap(map));
+      }
+
+      return Right(course);
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }
