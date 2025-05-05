@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
+import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/main.dart';
 import 'package:online_training_template/models/course_model.dart';
 import 'package:online_training_template/models/teacher_model.dart';
@@ -62,7 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             return Column(
               children: <Widget>[
                 SizedBox(height: MediaQuery.of(context).padding.top),
-                getAppBarUI(currentUser?.name ?? ''),
+                getAppBarUI(currentUser?.name ?? '', teacher.profile_photo),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -280,7 +281,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget getAppBarUI(String name) {
+  Widget getAppBarUI(String name, String? image) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 18, right: 18),
       child: Row(
@@ -310,10 +311,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                 MaterialPageRoute(builder: (context) => ProfileScreen()),
               );
             },
-            child: Container(
-              width: 60,
-              height: 60,
-              child: Image.asset('assets/userImage.png'),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Image.network(
+                image == null
+                    ? 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?t=st=1746444895~exp=1746448495~hmac=4772f9f8087dd0456f600676caecff033f8d543ea255f16a004a2b0117b311f9&w=740'
+                    : '${ServerConstant.baseUrl}/$image',
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
             ),
           )
         ],
