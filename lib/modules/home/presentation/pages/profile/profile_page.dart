@@ -1,19 +1,28 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:online_training_template/app/const/const.dart';
+import 'package:online_training_template/models/user_model.dart';
+import 'package:online_training_template/modules/home/presentation/pages/help_center_page.dart';
+import 'package:online_training_template/modules/home/presentation/pages/my_profile_page.dart';
 import 'package:online_training_template/modules/home/presentation/pages/mycourses_page.dart';
+import 'package:online_training_template/modules/home/presentation/pages/notifications_page.dart';
+import 'package:online_training_template/modules/home/presentation/pages/settings_page.dart';
 import 'package:online_training_template/modules/login/presentation/pages/login_page.dart';
 import 'package:online_training_template/repositories/auth_local_repository.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  final UserModel userModel;
+  const ProfileScreen({super.key, required this.userModel});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  File? _profileImage;
+
   @override
   Widget build(BuildContext context) {
     final authRepo = ref.read(authLocalRepositoryProvider);
@@ -23,183 +32,285 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: const Text("Profile"),
+        centerTitle: true,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           children: [
-            const ProfilePic(),
-            const SizedBox(height: 20),
-            ProfileMenu(
-              text: "My Account",
-              icon: Icons.face_5,
-              press: () => {},
+            ProfilePic(
+              onImageSelected: (image) {
+                setState(() {
+                  _profileImage = image;
+                });
+                // Here you would typically upload the image to your server
+              },
             ),
-            ProfileMenu(
+            const SizedBox(height: 20),
+            _buildProfileMenu(
+              context,
+              icon: Icons.person_outline,
+              text: "My Account",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => UserProfileScreen(
+                            user: widget.userModel,
+                          )),
+                );
+              },
+            ),
+            _buildProfileMenu(
+              context,
+              icon: Icons.menu_book_outlined,
               text: "My Courses",
-              icon: Icons.subject,
-              press: () {
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const MyCoursePage()),
                 );
               },
             ),
-            ProfileMenu(
+            _buildProfileMenu(
+              context,
+              icon: Icons.notifications_outlined,
               text: "Notifications",
-              icon: Icons.notifications,
-              press: () {},
-            ),
-            ProfileMenu(
-              text: "Settings",
-              icon: Icons.settings,
-              press: () {},
-            ),
-            ProfileMenu(
-              text: "Help Center",
-              icon: Icons.help,
-              press: () {},
-            ),
-            ProfileMenu(
-              text: "Log Out",
-              icon: Icons.logout,
-              press: () {
-                showDialog(
-                  context: context,
-                  barrierDismissible:
-                      false, // Prevent dismiss by tapping outside
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to log out?'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close the dialog
-                          },
-                        ),
-                        TextButton(
-                          child: Text('Logout'),
-                          onPressed: () async {
-                            await authRepo.removeToken();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const LoginPage()),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NotificationsPage()),
                 );
               },
+            ),
+            _buildProfileMenu(
+              context,
+              icon: Icons.settings_outlined,
+              text: "Settings",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
+              },
+            ),
+            _buildProfileMenu(
+              context,
+              icon: Icons.help_outline,
+              text: "Help Center",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const HelpCenterPage()),
+                );
+              },
+            ),
+            _buildProfileMenu(
+              context,
+              icon: Icons.logout,
+              text: "Log Out",
+              isLogout: true,
+              onPressed: () => _showLogoutDialog(context, authRepo),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class ProfilePic extends StatelessWidget {
-  const ProfilePic({
-    Key? key,
-  }) : super(key: key);
+  Widget _buildProfileMenu(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onPressed,
+    bool isLogout = false,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isLogout
+              ? Colors.red.withOpacity(0.1)
+              : Colors.blue.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: isLogout ? Colors.red : Colors.blue,
+        ),
+      ),
+      title: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          color: isLogout ? Colors.red : Colors.black,
+        ),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      onTap: onPressed,
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 115,
-      width: 115,
-      child: Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: [
-          const CircleAvatar(
-            backgroundImage: NetworkImage(
-                "https://t3.ftcdn.net/jpg/12/65/26/04/240_F_1265260489_MmQSZmsuJgZbPQ1DfKyTT0n6BS892y1C.jpg"),
+  Future<void> _showLogoutDialog(
+      BuildContext context, AuthLocalRepository authRepo) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          Positioned(
-            right: -16,
-            bottom: 0,
-            child: SizedBox(
-              height: 46,
-              width: 46,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                    side: const BorderSide(color: Colors.white),
-                  ),
-                  backgroundColor: const Color(0xFFF5F6F9),
-                ),
-                onPressed: () {},
-                child: SvgPicture.string(cameraIcon),
-              ),
+          TextButton(
+            onPressed: () async {
+              await authRepo.removeToken();
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
+            },
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 }
 
-class ProfileMenu extends StatelessWidget {
-  const ProfileMenu({
-    Key? key,
-    required this.text,
-    required this.icon,
-    this.press,
-  }) : super(key: key);
+class ProfilePic extends StatelessWidget {
+  final Function(File?)? onImageSelected;
+  final String? initialImageUrl;
 
-  final String text;
-  final IconData icon;
-  final VoidCallback? press;
+  const ProfilePic({
+    super.key,
+    this.onImageSelected,
+    this.initialImageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: TextButton(
-        style: TextButton.styleFrom(
-          foregroundColor: const Color(0xFFFF7643),
-          padding: const EdgeInsets.all(20),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          backgroundColor: const Color(0xFFF5F6F9),
-        ),
-        onPressed: press,
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 22,
+    return Center(
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.grey.shade200,
+                width: 2,
+              ),
             ),
-            // SvgPicture.asset(
-            //   icon,
-            //   colorFilter:
-            //       const ColorFilter.mode(Color(0xFFFF7643), BlendMode.srcIn),
-            //   width: 22,
-            // ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: Color(0xFF757575),
+            child: ClipOval(
+              child: initialImageUrl != null
+                  ? Image.network(
+                      initialImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                    )
+                  : _buildDefaultAvatar(),
+            ),
+          ),
+          Positioned(
+            right: 5,
+            bottom: 5,
+            child: GestureDetector(
+              onTap: () => _showImageSourceDialog(context),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF757575),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildDefaultAvatar() {
+    return const Icon(
+      Icons.person,
+      size: 60,
+      color: Colors.grey,
+    );
+  }
+
+  Future<void> _showImageSourceDialog(BuildContext context) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Select Image Source'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'camera'),
+            child: const Row(
+              children: [
+                Icon(Icons.camera_alt),
+                SizedBox(width: 10),
+                Text('Take Photo'),
+              ],
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'gallery'),
+            child: const Row(
+              children: [
+                Icon(Icons.photo_library),
+                SizedBox(width: 10),
+                Text('Choose from Gallery'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      final picker = ImagePicker();
+      final source =
+          result == 'camera' ? ImageSource.camera : ImageSource.gallery;
+
+      try {
+        final pickedFile = await picker.pickImage(
+          source: source,
+          maxWidth: 800,
+          maxHeight: 800,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null && onImageSelected != null) {
+          onImageSelected!(File(pickedFile.path));
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
   }
 }

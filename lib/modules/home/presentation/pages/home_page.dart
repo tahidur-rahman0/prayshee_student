@@ -6,6 +6,8 @@ import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/main.dart';
 import 'package:online_training_template/models/course_model.dart';
 import 'package:online_training_template/models/teacher_model.dart';
+import 'package:online_training_template/models/user_model.dart';
+import 'package:online_training_template/modules/home/presentation/pages/my_teacher_page.dart';
 import 'package:online_training_template/providers/course_list_provider.dart';
 import 'package:online_training_template/providers/current_user_notifier.dart';
 import 'package:online_training_template/providers/teacher_details_provider.dart';
@@ -63,7 +65,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             return Column(
               children: <Widget>[
                 SizedBox(height: MediaQuery.of(context).padding.top),
-                getAppBarUI(currentUser?.name ?? '', teacher.profile_photo),
+                getAppBarUI(
+                    currentUser?.name ?? '',
+                    teacher.profile_photo,
+                    teacher,
+                    currentUser ??
+                        UserModel(id: 0, token: '', name: '', phone: '')),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -281,7 +288,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget getAppBarUI(String name, String? image) {
+  Widget getAppBarUI(
+      String name, String? image, TeacherModel teacher, UserModel user) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 18, right: 18),
       child: Row(
@@ -296,10 +304,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                   textAlign: TextAlign.left,
                   style: AppTextStyles.caption,
                 ),
-                Text(
-                  name,
-                  textAlign: TextAlign.left,
-                  style: AppTextStyles.title,
+                InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ProfileScreen(
+                              userModel: user,
+                            )),
+                  ),
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.left,
+                    style: AppTextStyles.title,
+                  ),
                 ),
               ],
             ),
@@ -308,7 +325,10 @@ class _HomePageState extends ConsumerState<HomePage> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
+                MaterialPageRoute(
+                    builder: (context) => TeacherProfileScreen(
+                          teacher: teacher,
+                        )),
               );
             },
             child: ClipRRect(

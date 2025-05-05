@@ -25,19 +25,21 @@ class _MyCoursePageState extends ConsumerState<MyCoursePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Courses'),
+        title: const Text('My Courses'),
       ),
-      body: Column(
-        children: [
-          courseListAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
-            data: (result) => result.fold(
-              (failure) => Center(child: Text(failure.message)),
-              (courses) => getCourseListUI(courses),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            courseListAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (result) => result.fold(
+                (failure) => Center(child: Text(failure.message)),
+                (courses) => getCourseListUI(courses),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
