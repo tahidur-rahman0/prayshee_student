@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:online_training_template/models/video_model.dart';
 import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
 
 class VideoPlayerSection extends StatefulWidget {
   final VideoModel video;
@@ -17,7 +16,6 @@ class VideoPlayerSection extends StatefulWidget {
 
 class _VideoPlayerSectionState extends State<VideoPlayerSection> {
   late VideoPlayerController _videoPlayerController;
-  ChewieController? _chewieController;
   bool _isFullScreen = false;
   bool _isLoading = true;
   bool _hasError = false;
@@ -35,7 +33,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
         _hasError = false;
       });
 
-      // Convert Google Drive URL to direct download URL
       final directUrl = _convertToDirectUrl(widget.video.youtube_url);
 
       _videoPlayerController = VideoPlayerController.network(directUrl)
@@ -46,57 +43,13 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
               _isLoading = false;
             });
           }
+        })
+        ..initialize().then((_) {
+          setState(() {
+            _isLoading = false;
+          });
+          _videoPlayerController.play();
         });
-
-      await _videoPlayerController.initialize();
-
-      _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController,
-        autoPlay: true,
-        looping: false,
-        aspectRatio: _videoPlayerController.value.aspectRatio,
-        placeholder: Container(
-          color: Colors.black,
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-        autoInitialize: true,
-        showControls: true,
-        allowFullScreen: false, // We'll handle full screen manually
-        materialProgressColors: ChewieProgressColors(
-          playedColor: Colors.blueAccent,
-          handleColor: Colors.blue,
-          backgroundColor: Colors.grey,
-          bufferedColor: Colors.grey.withOpacity(0.5),
-        ),
-        errorBuilder: (context, errorMessage) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 50),
-                const SizedBox(height: 10),
-                Text(
-                  'Error loading video',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: initializePlayer,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
     } catch (e) {
       setState(() {
         _hasError = true;
@@ -116,7 +69,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
   @override
   void dispose() {
     _videoPlayerController.dispose();
-    _chewieController?.dispose();
     super.dispose();
   }
 
@@ -148,7 +100,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Video Player Section
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -169,8 +120,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
               ),
             ),
           ),
-
-          // Video Details Section
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -225,18 +174,44 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
       );
     }
 
-    if (_isLoading || _chewieController == null) {
-      return Container(
-        color: Colors.black,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return GestureDetector(
-      onTap: _toggleFullScreen,
-      child: Chewie(controller: _chewieController!),
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        VideoPlayer(_videoPlayerController),
+        VideoProgressIndicator(
+          _videoPlayerController,
+          allowScrubbing: true,
+          colors: VideoProgressColors(
+            playedColor: Colors.blueAccent,
+            bufferedColor: Colors.grey,
+            backgroundColor: Colors.black12,
+          ),
+        ),
+        Positioned(
+          bottom: 12,
+          right: 12,
+          child: FloatingActionButton.small(
+            backgroundColor: Colors.black.withOpacity(0.5),
+            onPressed: () {
+              setState(() {
+                _videoPlayerController.value.isPlaying
+                    ? _videoPlayerController.pause()
+                    : _videoPlayerController.play();
+              });
+            },
+            child: Icon(
+              _videoPlayerController.value.isPlaying
+                  ? Icons.pause
+                  : Icons.play_arrow,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -244,10 +219,6 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
     return Column(
       children: [
         _buildMetadataRow(Icons.info_outline, widget.video.description),
-        // _buildMetadataRow(Icons.library_books,
-        //     'Part of ${widget.video.courseName ?? "Course"}'),
-        // if (widget.video.duration != null)
-        //   _buildMetadataRow(Icons.timer, 'Duration: ${widget.video.duration}'),
       ],
     );
   }
@@ -284,9 +255,7 @@ class _VideoPlayerSectionState extends State<VideoPlayerSection> {
         body: SafeArea(
           child: Stack(
             children: [
-              Center(
-                child: _buildVideoPlayerContent(),
-              ),
+              Center(child: _buildVideoPlayerContent()),
               Positioned(
                 top: 16,
                 left: 16,
