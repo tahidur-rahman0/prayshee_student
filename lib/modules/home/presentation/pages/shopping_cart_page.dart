@@ -94,32 +94,46 @@ class _ShoppingCartPageState extends ConsumerState<ShoppingCartPage> {
         paymentMode: paymentMode,
       );
 
-      result.fold(
-        (failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Transaction failed: ${failure.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        },
-        (transaction) {
-          // Navigate to order confirmation page
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OrderConfirmationPage(
-                  courseId: widget.id,
-                  courseTitle: widget.title,
-                  amount: widget.price,
-                  transactionId: transaction.payment_id,
-                ),
-              ),
-            );
-          }
-        },
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderConfirmationPage(
+            courseId: widget.id,
+            courseTitle: widget.title,
+            amount: widget.price,
+            transactionId: timestamp.toString(),
+          ),
+        ),
       );
+
+      // result.fold(
+      //   (failure) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(
+      //         content: Text('Transaction failed: ${failure.message}'),
+      //         backgroundColor: Colors.red,
+      //       ),
+      //     );
+      //   },
+      //   (transaction) {
+      //     // Navigate to order confirmation page
+      //     if (mounted) {
+      //       Navigator.pushReplacement(
+      //         context,
+      //         MaterialPageRoute(
+      //           builder: (context) => OrderConfirmationPage(
+      //             courseId: widget.id,
+      //             courseTitle: widget.title,
+      //             amount: widget.price,
+      //             transactionId: transaction.payment_id,
+      //           ),
+      //         ),
+      //       );
+      //     }
+      //   },
+      // );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
