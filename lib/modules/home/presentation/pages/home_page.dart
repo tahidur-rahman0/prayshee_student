@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/main.dart';
 import 'package:online_training_template/models/course_model.dart';
@@ -19,6 +21,12 @@ import 'package:online_training_template/ui/text_styles.dart';
 import '../widgets/popular_course_list_widget.dart';
 import 'profile/profile_page.dart';
 
+enum CategoryType {
+  ui,
+  coding,
+  basic,
+}
+
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -29,10 +37,23 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   CategoryType categoryType = CategoryType.ui;
   String? selectedSubject;
+  File? _localProfileImage;
+  static const String _profileImageKey = 'profile_image_path';
 
   @override
   void initState() {
     super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final imagePath = prefs.getString(_profileImageKey);
+    if (imagePath != null) {
+      setState(() {
+        _localProfileImage = File(imagePath);
+      });
+    }
   }
 
   @override
@@ -304,6 +325,24 @@ class _HomePageState extends ConsumerState<HomePage> {
                   textAlign: TextAlign.left,
                   style: AppTextStyles.caption,
                 ),
+                if (_localProfileImage != null)
+                  InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileScreen(
+                                userModel: user,
+                              )),
+                    ),
+                    child: ClipOval(
+                      child: Image.file(
+                        _localProfileImage!,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 InkWell(
                   onTap: () => Navigator.push(
                     context,
@@ -347,10 +386,4 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
-}
-
-enum CategoryType {
-  ui,
-  coding,
-  basic,
 }

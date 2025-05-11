@@ -317,6 +317,7 @@ class _CourseInfoPageState extends ConsumerState<MyCourseInfoPage> {
   Widget getPdfCourseList(List<PdfsModel> courses) {
     return PdfCourseListView(
       courses: courses,
+      buy: true,
     );
   }
 

@@ -26,15 +26,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-   DateTime? _lastBackPressed;
+  DateTime? _lastBackPressed;
 
   Future<bool> _onWillPop() async {
     final now = DateTime.now();
 
-    if (_lastBackPressed == null || now.difference(_lastBackPressed!) >const Duration(seconds: 2)) {
+    if (_lastBackPressed == null ||
+        now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
       _lastBackPressed = now;
       ScaffoldMessenger.of(context).showSnackBar(
-       const SnackBar(
+        const SnackBar(
           content: Text('Press back again to exit'),
           duration: Duration(seconds: 2),
         ),
@@ -43,7 +44,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     SystemNavigator.pop();
-  return false;
+    return false;
   }
 
   @override
@@ -104,17 +105,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         setState(() {});
                       },
                       child: Obx(
-                        () => Icon(
-                            Get.find<ThemeController>().currentThemeMode.value ==
-                                    ThemeMode.dark
-                                ? Icons.light_mode
-                                : Icons.dark_mode),
+                        () => Icon(Get.find<ThemeController>()
+                                    .currentThemeMode
+                                    .value ==
+                                ThemeMode.dark
+                            ? Icons.light_mode
+                            : Icons.dark_mode),
                       ),
                     ),
                   ),
                 ),
               ),
-      
+
               // Main content
               Expanded(
                 flex: 9,
@@ -140,6 +142,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Image.asset(
+              'assets/logo.png',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+            ),
             Text(
               S.of(context).loginAccount,
               style: AppTextStyles.headline,

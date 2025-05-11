@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/models/user_model.dart';
 import 'package:online_training_template/modules/home/presentation/pages/help_center_page.dart';
@@ -11,6 +12,7 @@ import 'package:online_training_template/modules/home/presentation/pages/notific
 import 'package:online_training_template/modules/home/presentation/pages/settings_page.dart';
 import 'package:online_training_template/modules/login/presentation/pages/login_page.dart';
 import 'package:online_training_template/repositories/auth_local_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final UserModel userModel;
@@ -22,6 +24,49 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   File? _profileImage;
+  static const String _profileImageKey = 'profile_image_path';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final imagePath = prefs.getString(_profileImageKey);
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
+
+  Future<void> _saveProfileImage(File image) async {
+    try {
+      // Get the application documents directory
+      final directory = await getApplicationDocumentsDirectory();
+      final String fileName =
+          'profile_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String filePath = '${directory.path}/$fileName';
+
+      // Copy the image to the app's documents directory
+      await image.copy(filePath);
+
+      // Save the file path to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_profileImageKey, filePath);
+
+      setState(() {
+        _profileImage = File(filePath);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving image: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +85,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Column(
           children: [
             ProfilePic(
-              onImageSelected: (image) {
-                setState(() {
-                  _profileImage = image;
-                });
-                // Here you would typically upload the image to your server
+              localImage: _profileImage,
+              onImageSelected: (image) async {
+                if (image != null) {
+                  await _saveProfileImage(image);
+                }
               },
             ),
             const SizedBox(height: 20),
@@ -190,11 +235,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 class ProfilePic extends StatelessWidget {
   final Function(File?)? onImageSelected;
   final String? initialImageUrl;
+  final File? localImage;
 
   const ProfilePic({
     super.key,
     this.onImageSelected,
     this.initialImageUrl,
+    this.localImage,
   });
 
   @override
@@ -214,13 +261,18 @@ class ProfilePic extends StatelessWidget {
               ),
             ),
             child: ClipOval(
-              child: initialImageUrl != null
-                  ? Image.network(
-                      initialImageUrl!,
+              child: localImage != null
+                  ? Image.file(
+                      localImage!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
                     )
-                  : _buildDefaultAvatar(),
+                  : initialImageUrl != null
+                      ? Image.network(
+                          initialImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                        )
+                      : _buildDefaultAvatar(),
             ),
           ),
           Positioned(

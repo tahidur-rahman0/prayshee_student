@@ -5,10 +5,12 @@ import 'package:online_training_template/modules/video_payer/video_payer.dart';
 
 class VideoCourseListView extends StatefulWidget {
   final List<VideoModel> courses;
+  bool buy;
 
-  const VideoCourseListView({
+  VideoCourseListView({
     Key? key,
     required this.courses,
+    this.buy = false,
   }) : super(key: key);
 
   @override
@@ -65,6 +67,7 @@ class _VideoCourseListViewState extends State<VideoCourseListView>
               course: course,
               animation: animation,
               animationController: animationController!,
+              buy: widget.buy,
               callback: () {
                 // if (widget.callBack != null) {
                 //   widget.callBack!(course);
@@ -83,6 +86,7 @@ class CourseCard extends StatelessWidget {
   final AnimationController animationController;
   final Animation<double> animation;
   final VoidCallback? callback;
+  final bool buy;
 
   const CourseCard({
     Key? key,
@@ -90,6 +94,7 @@ class CourseCard extends StatelessWidget {
     required this.animationController,
     required this.animation,
     this.callback,
+    required this.buy,
   }) : super(key: key);
 
   @override
@@ -103,14 +108,22 @@ class CourseCard extends StatelessWidget {
             offset: Offset(0.0, 50 * (1.0 - animation.value)),
             child: InkWell(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerSection(
-                      video: course,
+                if (course.is_paid == 0 || buy) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VideoPlayerSection(
+                        video: course,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You need to buy this course first'),
+                    ),
+                  );
+                }
               },
               child: Container(
                 height: 280,

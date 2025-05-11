@@ -1,14 +1,21 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:online_training_template/app/const/const.dart';
 import 'package:online_training_template/models/pdfs_model.dart';
 import 'package:online_training_template/modules/pdf_viewer/flutter_pdfview.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PdfCourseListView extends StatefulWidget {
   final List<PdfsModel> courses;
+  bool buy;
 
-  const PdfCourseListView({
+  PdfCourseListView({
     Key? key,
     required this.courses,
+    this.buy = false,
   }) : super(key: key);
 
   @override
@@ -65,6 +72,7 @@ class _PdfCourseListViewState extends State<PdfCourseListView>
               course: course,
               animation: animation,
               animationController: animationController!,
+              buy: widget.buy,
               callback: () {
                 // if (widget.callBack != null) {
                 //   widget.callBack!(course);
@@ -83,12 +91,14 @@ class CourseCard extends StatelessWidget {
   final AnimationController animationController;
   final Animation<double> animation;
   final VoidCallback? callback;
+  final bool buy;
 
   const CourseCard({
     Key? key,
     required this.course,
     required this.animationController,
     required this.animation,
+    required this.buy,
     this.callback,
   }) : super(key: key);
 
@@ -103,19 +113,27 @@ class CourseCard extends StatelessWidget {
             offset: Offset(0.0, 50 * (1.0 - animation.value)),
             child: InkWell(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => PDFViewerPage(
-                            pdf: course.pdf_url,
-                          )),
-                );
+                if (course.is_paid == 0 || buy) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PDFViewerPage(
+                              pdf: course.pdf_url,
+                            )),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You need to buy this course first'),
+                    ),
+                  );
+                }
               },
               child: Container(
                 height: 280,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 8,
@@ -196,6 +214,74 @@ class CourseCard extends StatelessWidget {
                               //     color: Colors.white,
                               //   ),
                               // ),
+                              if (course.download_able == 1)
+                                IconButton(
+                                  onPressed: () async {
+                                    final url =
+                                        '${ServerConstant.baseUrl}/${course.pdf_url}';
+                                    final fileName = url.split('/').last;
+
+                                    // var status = await Permission.storage.request();
+                                    // if (status.isGranted) {
+                                    try {
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (BuildContext context) {
+                                          return const AlertDialog(
+                                            content: Row(
+                                              children: [
+                                                CircularProgressIndicator(),
+                                                SizedBox(width: 16),
+                                                Text("Downloading..."),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+
+                                      Directory? directory;
+                                      if (Platform.isAndroid) {
+                                        directory = Directory(
+                                            '/storage/emulated/0/Download');
+                                      } else {
+                                        directory =
+                                            await getApplicationDocumentsDirectory();
+                                      }
+
+                                      final filePath =
+                                          '${directory.path}/$fileName';
+
+                                      await Dio().download(url, filePath);
+
+                                      Navigator.of(context)
+                                          .pop(); // close the loading dialog
+
+                                      Fluttertoast.showToast(
+                                        msg:
+                                            "Downloaded to ${directory.path}/$fileName",
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                    } catch (e) {
+                                      Navigator.of(context)
+                                          .pop(); // close the dialog if error
+                                      Fluttertoast.showToast(
+                                        msg: "Download failed: $e",
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                    }
+                                    // } else {
+                                    //   Fluttertoast.showToast(
+                                    //     msg: "Storage permission denied",
+                                    //     toastLength: Toast.LENGTH_SHORT,
+                                    //   );
+                                    // }
+                                  },
+                                  icon: const Icon(
+                                    Icons.download,
+                                    color: Colors.white,
+                                  ),
+                                )
                             ],
                           ),
                         ],
